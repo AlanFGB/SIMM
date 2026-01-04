@@ -135,6 +135,7 @@
     </main>
 
     <script>
+        // Carrega os registos e a configuração do armazenamento local (browser)
         let records = JSON.parse(localStorage.getItem('simm_records')) || [];
         let config = JSON.parse(localStorage.getItem('simm_config')) || null;
         let isAnonymized = true;
@@ -143,6 +144,7 @@
         const headerLoc = document.getElementById('headerLoc');
         const tableLoc = document.getElementById('tableLoc');
 
+        // Função para verificar se o município já foi configurado
         function checkConfig() {
             if (!config) {
                 setupModal.classList.remove('hidden');
@@ -154,6 +156,7 @@
             }
         }
 
+        // Grava a configuração de Município e Estado
         document.getElementById('saveConfig').addEventListener('click', () => {
             const mun = document.getElementById('munInput').value;
             const uf = document.getElementById('ufInput').value;
@@ -162,18 +165,19 @@
                 localStorage.setItem('simm_config', JSON.stringify(config));
                 checkConfig();
             } else {
-                alert("Preencha Município e Estado.");
+                alert("Por favor, preencha o Município e o Estado.");
             }
         });
 
+        // Permite resetar a configuração de localidade
         document.getElementById('resetConfig').addEventListener('click', () => {
-            if(confirm("Deseja alterar a localidade do sistema?")) {
+            if(confirm("Deseja alterar a localidade do sistema? Isto reiniciará a página.")) {
                 localStorage.removeItem('simm_config');
                 location.reload();
             }
         });
 
-        // Toggle LGPD
+        // Ativa/Desativa o modo de proteção de dados (LGPD)
         document.getElementById('toggleAnonymize').addEventListener('click', function() {
             isAnonymized = !isAnonymized;
             document.body.classList.toggle('anonymized', isAnonymized);
@@ -183,7 +187,7 @@
                 : "bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg transition text-sm font-medium border border-gray-400";
         });
 
-        // Form Submit
+        // Submissão do formulário de óbito
         document.getElementById('deathForm').addEventListener('submit', (e) => {
             e.preventDefault();
             const newRecord = {
@@ -201,19 +205,22 @@
             e.target.reset();
         });
 
+        // Remove um registo da lista
         function deleteRecord(id) {
-            if(confirm("Excluir este registro?")) {
+            if(confirm("Deseja realmente excluir este registro?")) {
                 records = records.filter(r => r.id !== id);
                 localStorage.setItem('simm_records', JSON.stringify(records));
                 renderTable();
             }
         }
 
+        // Atualiza a tabela no ecrã
         function renderTable() {
             const tableBody = document.getElementById('tableBody');
             tableBody.innerHTML = '';
             document.getElementById('recordCount').textContent = `${records.length} Registro(s)`;
             
+            // Ordena por data (mais recente primeiro)
             records.sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(r => {
                 const row = document.createElement('tr');
                 row.className = "hover:bg-gray-50 border-b transition";
@@ -225,27 +232,28 @@
                     <td class="p-4"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-bold">${r.cause}</span></td>
                     <td class="p-4">${r.location}</td>
                     <td class="p-4 no-print text-center">
-                        <button onclick="deleteRecord(${r.id})" class="text-red-500 hover:scale-110 transition">Excluir</button>
+                        <button onclick="deleteRecord(${r.id})" class="text-red-500 hover:scale-110 transition font-medium">Excluir</button>
                     </td>
                 `;
                 tableBody.appendChild(row);
             });
         }
 
-        // Export CSV com dados de localidade
+        // Exportação para CSV (compatível com Excel) incluindo Município e Estado
         document.getElementById('exportCSV').addEventListener('click', () => {
-            if (records.length === 0) return alert("Sem dados.");
+            if (records.length === 0) return alert("Não existem dados para exportar.");
             let csv = "Município,UF,DO,Nome,CPF,Data,Causa,Local\n";
             records.forEach(r => {
                 csv += `${config.municipio},${config.uf},${r.do},${r.name},${r.cpf},${r.date},${r.cause},${r.location}\n`;
             });
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
             link.download = `SIMM_${config.municipio}_${config.uf}.csv`;
             link.click();
         });
 
+        // Inicia o sistema
         window.onload = () => {
             checkConfig();
             document.body.classList.add('anonymized');
