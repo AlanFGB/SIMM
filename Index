@@ -6,44 +6,71 @@
     <title>SIMM - Sistema de Informação de Mortalidade Municipal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .sensitive-data {
-            transition: all 0.3s ease;
-        }
+        .sensitive-data { transition: all 0.3s ease; }
         .anonymized .sensitive-data {
             filter: blur(5px);
             user-select: none;
             color: transparent;
         }
-        @media print {
-            .no-print { display: none; }
-        }
+        @media print { .no-print { display: none; } }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen font-sans">
 
+    <!-- Modal de Configuração Inicial -->
+    <div id="setupModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white p-8 rounded-xl shadow-2xl max-w-md w-full mx-4">
+            <h2 class="text-2xl font-bold mb-4 text-blue-700">Configuração do Sistema</h2>
+            <p class="text-gray-600 mb-6 text-sm">Por favor, identifique a localidade de operação do SIMM.</p>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Município</label>
+                    <input type="text" id="munInput" placeholder="Ex: São Paulo" class="mt-1 w-full p-2 border rounded-md outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Estado (UF)</label>
+                    <select id="ufInput" class="mt-1 w-full p-2 border rounded-md outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Selecione...</option>
+                        <option value="AC">Acre</option><option value="AL">Alagoas</option><option value="AP">Amapá</option>
+                        <option value="AM">Amazonas</option><option value="BA">Bahia</option><option value="CE">Ceará</option>
+                        <option value="DF">Distrito Federal</option><option value="ES">Espírito Santo</option><option value="GO">Goiás</option>
+                        <option value="MA">Maranhão</option><option value="MT">Mato Grosso</option><option value="MS">Mato Grosso do Sul</option>
+                        <option value="MG">Minas Gerais</option><option value="PA">Pará</option><option value="PB">Paraíba</option>
+                        <option value="PR">Paraná</option><option value="PE">Pernambuco</option><option value="PI">Piauí</option>
+                        <option value="RJ">Rio de Janeiro</option><option value="RN">Rio Grande do Norte</option><option value="RS">Rio Grande do Sul</option>
+                        <option value="RO">Rondônia</option><option value="RR">Roraima</option><option value="SC">Santa Catarina</option>
+                        <option value="SP">São Paulo</option><option value="SE">Sergipe</option><option value="TO">Tocantins</option>
+                    </select>
+                </div>
+                <button id="saveConfig" class="w-full bg-blue-700 text-white font-bold py-2 rounded-lg hover:bg-blue-800 transition">Entrar no Sistema</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Header -->
     <header class="bg-blue-700 text-white shadow-lg no-print">
-        <div class="container mx-auto px-4 py-6 flex justify-between items-center">
+        <div class="container mx-auto px-4 py-6 flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
-                <h1 class="text-2xl font-bold">SIMM</h1>
-                <p class="text-sm opacity-80">Sistema de Informação de Mortalidade Municipal</p>
+                <h1 class="text-2xl font-bold flex items-center">
+                    SIMM <span id="headerLoc" class="ml-2 text-blue-200 font-light text-xl"></span>
+                </h1>
+                <p class="text-sm opacity-80">Vigilância Epidemiológica de Óbitos</p>
             </div>
-            <div class="flex gap-4">
-                <button id="toggleAnonymize" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg transition text-sm font-medium border border-blue-400">
-                    Modo LGPD: Ativo
-                </button>
-                <button onclick="window.print()" class="bg-white text-blue-700 hover:bg-gray-100 px-4 py-2 rounded-lg transition text-sm font-medium">
-                    Imprimir Relatório
-                </button>
+            <div class="flex flex-wrap gap-2">
+                <button id="toggleAnonymize" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg transition text-sm font-medium border border-red-400">Modo LGPD: Ativo</button>
+                <button id="exportCSV" class="bg-green-600 hover:bg-green-500 px-4 py-2 rounded-lg transition text-sm font-medium">Exportar CSV</button>
+                <button onclick="window.print()" class="bg-white text-blue-700 hover:bg-gray-100 px-4 py-2 rounded-lg transition text-sm font-medium">Imprimir</button>
+                <button id="resetConfig" class="text-xs opacity-50 hover:opacity-100 underline ml-2">Alterar Localidade</button>
             </div>
         </div>
     </header>
 
     <main class="container mx-auto px-4 py-8">
-        
-        <!-- Form Section -->
-        <section class="bg-white rounded-xl shadow-md p-6 mb-8 no-print">
-            <h2 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Novo Registro de Óbito</h2>
+        <!-- Seção de Formulário -->
+        <section class="bg-white rounded-xl shadow-md p-6 mb-8 no-print border-t-4 border-blue-600">
+            <h2 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-2 flex items-center">
+                <span class="mr-2">📝</span> Novo Registro de Óbito
+            </h2>
             <form id="deathForm" class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Nº da DO</label>
@@ -66,7 +93,7 @@
                     <input type="text" id="cause" required placeholder="Ex: I21.9" class="mt-1 w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Local do Óbito</label>
+                    <label class="block text-sm font-medium text-gray-700">Local</label>
                     <select id="locationType" class="mt-1 w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none">
                         <option value="Hospital">Hospital</option>
                         <option value="Domicílio">Domicílio</option>
@@ -75,18 +102,18 @@
                     </select>
                 </div>
                 <div class="md:col-span-3 flex justify-end">
-                    <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-bold transition">
-                        Registrar Óbito
-                    </button>
+                    <button type="submit" class="bg-blue-700 hover:bg-blue-800 text-white px-8 py-2 rounded-lg font-bold transition shadow-md">Salvar Registro</button>
                 </div>
             </form>
         </section>
 
-        <!-- List Section -->
-        <section class="bg-white rounded-xl shadow-md overflow-hidden">
-            <div class="p-6 border-b flex justify-between items-center">
-                <h2 class="text-xl font-semibold text-gray-800">Registros Ativos</h2>
-                <span id="recordCount" class="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-0.5 rounded-full uppercase">0 Registros</span>
+        <!-- Tabela -->
+        <section class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
+            <div class="p-6 border-b flex justify-between items-center bg-gray-50">
+                <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+                    <span class="mr-2">📊</span> Lista de Óbitos <span id="tableLoc" class="ml-2 text-gray-500 text-sm italic"></span>
+                </h2>
+                <span id="recordCount" class="bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full">0 Registros</span>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse" id="deathTable">
@@ -96,45 +123,69 @@
                             <th class="p-4 border-b">Nome</th>
                             <th class="p-4 border-b">CPF</th>
                             <th class="p-4 border-b">Data</th>
-                            <th class="p-4 border-b">Causa (CID)</th>
+                            <th class="p-4 border-b">Causa</th>
                             <th class="p-4 border-b">Local</th>
                             <th class="p-4 border-b no-print">Ações</th>
                         </tr>
                     </thead>
-                    <tbody id="tableBody" class="text-gray-700">
-                        <!-- Linhas serão inseridas aqui via JS -->
-                    </tbody>
+                    <tbody id="tableBody" class="text-gray-700"></tbody>
                 </table>
             </div>
         </section>
     </main>
 
-    <footer class="container mx-auto px-4 py-8 text-center text-gray-500 text-sm">
-        <p>SIMM &copy; 2026 - Licença MIT. Projeto de Vigilância Epidemiológica Municipal.</p>
-    </footer>
-
     <script>
-        let records = [];
-        let isAnonymized = false;
+        let records = JSON.parse(localStorage.getItem('simm_records')) || [];
+        let config = JSON.parse(localStorage.getItem('simm_config')) || null;
+        let isAnonymized = true;
 
-        const deathForm = document.getElementById('deathForm');
-        const tableBody = document.getElementById('tableBody');
-        const toggleBtn = document.getElementById('toggleAnonymize');
-        const recordCount = document.getElementById('recordCount');
+        const setupModal = document.getElementById('setupModal');
+        const headerLoc = document.getElementById('headerLoc');
+        const tableLoc = document.getElementById('tableLoc');
 
-        // Toggle LGPD Mode
-        toggleBtn.addEventListener('click', () => {
+        function checkConfig() {
+            if (!config) {
+                setupModal.classList.remove('hidden');
+            } else {
+                setupModal.classList.add('hidden');
+                headerLoc.textContent = `| ${config.municipio} - ${config.uf}`;
+                tableLoc.textContent = `(${config.municipio}/${config.uf})`;
+                renderTable();
+            }
+        }
+
+        document.getElementById('saveConfig').addEventListener('click', () => {
+            const mun = document.getElementById('munInput').value;
+            const uf = document.getElementById('ufInput').value;
+            if (mun && uf) {
+                config = { municipio: mun, uf: uf };
+                localStorage.setItem('simm_config', JSON.stringify(config));
+                checkConfig();
+            } else {
+                alert("Preencha Município e Estado.");
+            }
+        });
+
+        document.getElementById('resetConfig').addEventListener('click', () => {
+            if(confirm("Deseja alterar a localidade do sistema?")) {
+                localStorage.removeItem('simm_config');
+                location.reload();
+            }
+        });
+
+        // Toggle LGPD
+        document.getElementById('toggleAnonymize').addEventListener('click', function() {
             isAnonymized = !isAnonymized;
             document.body.classList.toggle('anonymized', isAnonymized);
-            toggleBtn.textContent = isAnonymized ? "Modo LGPD: Ativado" : "Modo LGPD: Desativado";
-            toggleBtn.classList.toggle('bg-red-600', isAnonymized);
-            toggleBtn.classList.toggle('bg-blue-600', !isAnonymized);
+            this.textContent = isAnonymized ? "Modo LGPD: Ativo" : "Modo LGPD: Inativo";
+            this.className = isAnonymized 
+                ? "bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg transition text-sm font-medium border border-red-400"
+                : "bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg transition text-sm font-medium border border-gray-400";
         });
 
         // Form Submit
-        deathForm.addEventListener('submit', (e) => {
+        document.getElementById('deathForm').addEventListener('submit', (e) => {
             e.preventDefault();
-            
             const newRecord = {
                 id: Date.now(),
                 do: document.getElementById('doNumber').value,
@@ -144,48 +195,59 @@
                 cause: document.getElementById('cause').value,
                 location: document.getElementById('locationType').value
             };
-
             records.push(newRecord);
+            localStorage.setItem('simm_records', JSON.stringify(records));
             renderTable();
-            deathForm.reset();
+            e.target.reset();
         });
 
         function deleteRecord(id) {
-            records = records.filter(r => r.id !== id);
-            renderTable();
+            if(confirm("Excluir este registro?")) {
+                records = records.filter(r => r.id !== id);
+                localStorage.setItem('simm_records', JSON.stringify(records));
+                renderTable();
+            }
         }
 
         function renderTable() {
+            const tableBody = document.getElementById('tableBody');
             tableBody.innerHTML = '';
-            recordCount.textContent = `${records.length} Registros`;
-
-            records.forEach(record => {
+            document.getElementById('recordCount').textContent = `${records.length} Registro(s)`;
+            
+            records.sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(r => {
                 const row = document.createElement('tr');
-                row.className = "hover:bg-gray-50 transition border-b";
+                row.className = "hover:bg-gray-50 border-b transition";
                 row.innerHTML = `
-                    <td class="p-4 font-mono text-sm">${record.do}</td>
-                    <td class="p-4 sensitive-data">${record.name}</td>
-                    <td class="p-4 sensitive-data text-xs">${record.cpf}</td>
-                    <td class="p-4">${new Date(record.date).toLocaleDateString('pt-BR')}</td>
-                    <td class="p-4"><span class="bg-gray-200 px-2 py-1 rounded text-xs font-bold">${record.cause}</span></td>
-                    <td class="p-4">${record.location}</td>
-                    <td class="p-4 no-print">
-                        <button onclick="deleteRecord(${record.id})" class="text-red-500 hover:text-red-700 underline text-sm">Excluir</button>
+                    <td class="p-4 font-mono text-sm">${r.do}</td>
+                    <td class="p-4 sensitive-data">${r.name}</td>
+                    <td class="p-4 sensitive-data text-xs">${r.cpf}</td>
+                    <td class="p-4">${new Date(r.date + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
+                    <td class="p-4"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-bold">${r.cause}</span></td>
+                    <td class="p-4">${r.location}</td>
+                    <td class="p-4 no-print text-center">
+                        <button onclick="deleteRecord(${r.id})" class="text-red-500 hover:scale-110 transition">Excluir</button>
                     </td>
                 `;
                 tableBody.appendChild(row);
             });
         }
 
-        // Dados de exemplo inicial
+        // Export CSV com dados de localidade
+        document.getElementById('exportCSV').addEventListener('click', () => {
+            if (records.length === 0) return alert("Sem dados.");
+            let csv = "Município,UF,DO,Nome,CPF,Data,Causa,Local\n";
+            records.forEach(r => {
+                csv += `${config.municipio},${config.uf},${r.do},${r.name},${r.cpf},${r.date},${r.cause},${r.location}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `SIMM_${config.municipio}_${config.uf}.csv`;
+            link.click();
+        });
+
         window.onload = () => {
-            records = [
-                { id: 1, do: "2938472-1", name: "João da Silva Sauro", cpf: "123.456.789-00", date: "2025-12-25", cause: "I21.9", location: "Hospital" },
-                { id: 2, do: "1122334-5", name: "Maria Oliveira de Souza", cpf: "987.654.321-11", date: "2025-12-28", cause: "C34.9", location: "Domicílio" }
-            ];
-            renderTable();
-            // Inicia anonimizado por segurança
-            isAnonymized = true;
+            checkConfig();
             document.body.classList.add('anonymized');
         };
     </script>
